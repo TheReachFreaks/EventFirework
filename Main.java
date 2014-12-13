@@ -1,7 +1,6 @@
 package me.TheReachFreaks.EventFirework;
 
 import java.util.ArrayList;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
@@ -13,14 +12,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerAchievementAwardedEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerKickEvent;
+import org.bukkit.event.player.PlayerLevelChangeEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class main extends JavaPlugin implements Listener {
-
+	Updater updater = new Updater(this, 86894, this.getFile(), Updater.UpdateType.DEFAULT, false);
 	private ArrayList<String> commandFirework = new ArrayList<String>();
 	private ArrayList<String> fireworkArgs = new ArrayList<String>();
 
@@ -31,12 +33,24 @@ public class main extends JavaPlugin implements Listener {
 	@Override
 	public void onEnable() {
 		Bukkit.getServer().getPluginManager().registerEvents(this, this);
-		@SuppressWarnings("unused")
-		Updater updater = new Updater(this, 86894, this.getFile(), Updater.UpdateType.DEFAULT, false);
 		this.saveDefaultConfig();
-
+		if (getConfig().get("configversion").equals(1.0)) {
+			getLogger().info("Config File Loaded Successfully.");
+		}
+		if (!getConfig().get("configversion").equals(1.0)) {
+			getLogger().info("=============================================");
+			getLogger().info("Config File Is Not Up To Date, Or Is Broken.");
+			getLogger().info("Please Delete The Config.yml And Reload ASAP,");
+			getLogger().info("To Ensure The Config File Is Woring Correctly.");
+			getLogger().info("=============================================");
+		}
 	}
-	double version = 1.9;
+	
+	//PLUGIN VERSION DECLARATION
+	double version = 2.0;
+	
+	//PREFIX DECLARATION
+	String prefix =("§e[EventFirework]§f "); 
 
 	/**
 	 * PLAYER COMMANDS
@@ -48,7 +62,10 @@ public class main extends JavaPlugin implements Listener {
         ///////////////////////////////////
 		commandFirework.add("onjoin");
 		commandFirework.add("onquit");
+		commandFirework.add("onlevelchange");
 		commandFirework.add("onrespawn");
+		commandFirework.add("onachievement");
+		commandFirework.add("onkick");
 		commandFirework.add("ondeath");
 		commandFirework.add("customize");
 		commandFirework.add("reload");
@@ -61,8 +78,6 @@ public class main extends JavaPlugin implements Listener {
 		fireworkArgs.add("fade");
 		fireworkArgs.add("color");
 		
-		//PREFIX DECLARATION
-		String prefix =("§e[EventFirework]§f "); 
 		if (label.equalsIgnoreCase("firework")) {
 			if (args.length == 0) {
 				sender.sendMessage("§6===============================");
@@ -104,6 +119,18 @@ public class main extends JavaPlugin implements Listener {
 					}
 				if (args[0].equalsIgnoreCase("onrespawn")) {
 					sender.sendMessage(prefix + "§cProper Usage: §f/Firework onrespawn §6(on/off)§f.");
+					return false;
+					}
+				if (args[0].equalsIgnoreCase("onlevelchange")) {
+					sender.sendMessage(prefix + "§cProper Usage: §f/Firework onlevelchange §6(on/off)§f.");
+					return false;
+					}
+				if (args[0].equalsIgnoreCase("onachievement")) {
+					sender.sendMessage(prefix + "§cProper Usage: §f/Firework onachievement §6(on/off)§f.");
+					return false;
+					}
+				if (args[0].equalsIgnoreCase("onkick")) {
+					sender.sendMessage(prefix + "§cProper Usage: §f/Firework onkick §6(on/off)§f.");
 					return false;
 					}
 				if (args[0].equalsIgnoreCase("customize")) {
@@ -149,10 +176,51 @@ public class main extends JavaPlugin implements Listener {
 						reloadConfig();
 						sender.sendMessage(prefix + "§6Firework On Join§f Has Been §cDisabled.");
 						return true;
-					} 
+							} 
 						}
 					
 					} 
+				//ONLEVELCHANGE
+				if (args[0].equalsIgnoreCase("onlevelchange")) {
+					if (sender.hasPermission("firework.admin") || sender.isOp()) {
+					if (args[1].equalsIgnoreCase("on") || args[1].equalsIgnoreCase("true")) {
+						getConfig().set("fireworkonlevelchange", Boolean.TRUE);
+						saveConfig();
+						reloadConfig();
+						sender.sendMessage(prefix + "§6Firework On Level Change§f Has Been §aEnabled.");
+						return true;
+						} 
+					else if (args[1].equalsIgnoreCase("off") || args[1].equalsIgnoreCase("false")) {
+						getConfig().set("fireworkonlevelchange", Boolean.FALSE);
+						saveConfig();
+						reloadConfig();
+						sender.sendMessage(prefix + "§6Firework On Level Change§f Has Been §cDisabled.");
+						return true;
+							} 
+						}
+					
+					} 
+				//ONACHIEVEMENT
+				if (args[0].equalsIgnoreCase("onachievement")) {
+					if (sender.hasPermission("firework.admin") || sender.isOp()) {
+					if (args[1].equalsIgnoreCase("on") || args[1].equalsIgnoreCase("true")) {
+						getConfig().set("fireworkonachievement", Boolean.TRUE);
+						saveConfig();
+						reloadConfig();
+						sender.sendMessage(prefix + "§6Firework On Achievement§f Has Been §aEnabled.");
+						return true;
+						} 
+					else if (args[1].equalsIgnoreCase("off") || args[1].equalsIgnoreCase("false")) {
+						getConfig().set("fireworkonachievement", Boolean.FALSE);
+						saveConfig();
+						reloadConfig();
+						sender.sendMessage(prefix + "§6Firework On Achievement§f Has Been §cDisabled.");
+						return true;
+							} 
+						}
+					
+					} 
+				//ONRESPAWN
 				if (args[0].equalsIgnoreCase("onrespawn")) {
 					if (sender.hasPermission("firework.admin") || sender.isOp()) {
 					if (args[1].equalsIgnoreCase("on") || args[1].equalsIgnoreCase("true")) {
@@ -170,7 +238,25 @@ public class main extends JavaPlugin implements Listener {
 						return true;
 							} 
 						}
-					
+					}
+				//ONKICK
+				if (args[0].equalsIgnoreCase("onkick")) {
+					if (sender.hasPermission("firework.admin") || sender.isOp()) {
+					if (args[1].equalsIgnoreCase("on") || args[1].equalsIgnoreCase("true")) {
+						getConfig().set("fireworkonkick", Boolean.TRUE);
+						saveConfig();
+						reloadConfig();
+						sender.sendMessage(prefix + "§6Firework On Kick§f Has Been §aEnabled.");
+						return true;
+						} 
+					else if (args[1].equalsIgnoreCase("off") || args[1].equalsIgnoreCase("false")) {
+						getConfig().set("fireworkonkick", Boolean.FALSE);
+						saveConfig();
+						reloadConfig();
+						sender.sendMessage(prefix + "§6Firework On Kick§f Has Been §cDisabled.");
+						return true;
+							} 
+						}
 					}
 				//ONQUIT
 				else if (args[0].equalsIgnoreCase("onquit")) {
@@ -253,6 +339,7 @@ public class main extends JavaPlugin implements Listener {
 						}
 							}
 								}
+									}
 			//COLOR (Firework Customization)
 			 if (args.length == 5 && (sender.hasPermission("firework.admin")) || sender.isOp()) { 
 				if (args[1].equalsIgnoreCase("color")) {
@@ -320,10 +407,14 @@ public class main extends JavaPlugin implements Listener {
 				sender.sendMessage(prefix + "§cThats Not A Valid Command. §fDo /Help EventFirework For Help.");
 				return false;
 			}
-		}
 		return false;
 	}
 
+	//MESSAGE TO PLAYER IF CONFIG IS WRONG
+	
+	
+	
+	
 	/**
 	 * JOIN FIREWORK
 	 */
@@ -331,6 +422,10 @@ public class main extends JavaPlugin implements Listener {
 	@EventHandler
 	public void onPlayerJoin(final PlayerJoinEvent e) {
 		Player player = (Player) e.getPlayer();
+		if (!getConfig().get("configversion").equals(1.0) && player.isOp()) {
+			player.sendMessage(prefix + "§cThe Config File Is Either Broken Or Out Of Date.");
+			player.sendMessage("§4Please Delete The config.yml And Reload The Server.");
+		}
 		if (getConfig().getBoolean("fireworkonjoin", true)) {
 			if (player.hasPermission("firework.onjoin")) {
 				Bukkit.getServer().getScheduler()
@@ -374,6 +469,88 @@ public class main extends JavaPlugin implements Listener {
 		Player player = (Player) e.getEntity().getPlayer();
 		if (getConfig().getBoolean("fireworkondeath", true)) {
 			if (player.hasPermission("firework.ondeath")) {
+				Bukkit.getServer().getScheduler()
+						.scheduleSyncDelayedTask(this, new Runnable() {
+							public void run() {
+								Firework f = (Firework)
+										player
+										.getPlayer()
+										.getWorld()
+										.spawn(player.getLocation(),
+												Firework.class);
+								FireworkMeta fm = f.getFireworkMeta();
+								int colorRed = (int) getConfig().get("ColorRed");
+								int colorGreen = (int) getConfig().get("ColorGreen");
+								int colorBlue = (int) getConfig().get("ColorBlue");
+								Color x = Color.fromRGB(colorRed, colorGreen, colorBlue);
+								
+								int FadeColorRed = (int) getConfig().get("FadeColorRed");
+								int FadeColorGreen = (int) getConfig().get("FadeColorGreen");
+								int FadeColorBlue = (int) getConfig().get("FadeColorBlue");
+								Color x1 = Color.fromRGB(FadeColorRed, FadeColorGreen, FadeColorBlue);
+								fm.addEffect(FireworkEffect.builder()
+										.flicker(true).trail(true)
+										.with(Type.BALL_LARGE)
+										.withColor(x)
+										.withFade(x1).build());
+								fm.setPower(Integer.parseInt(getConfig().get("power").toString()));
+								f.setFireworkMeta(fm);
+							}
+						}, 20);
+			}		
+		}
+	}
+	
+	/**
+	 * LEVEL CHANGE FIREWORK
+	 */
+	
+	@EventHandler
+	public void onPlayerLevelChange(final PlayerLevelChangeEvent e) {
+		Player player = (Player) e.getPlayer();
+		if (getConfig().getBoolean("fireworkonlevelchange", true)) {
+			if (player.hasPermission("firework.onlevelchange")) {
+				Bukkit.getServer().getScheduler()
+						.scheduleSyncDelayedTask(this, new Runnable() {
+							public void run() {
+								Firework f = (Firework)
+										player
+										.getPlayer()
+										.getWorld()
+										.spawn(player.getLocation(),
+												Firework.class);
+								FireworkMeta fm = f.getFireworkMeta();
+								int colorRed = (int) getConfig().get("ColorRed");
+								int colorGreen = (int) getConfig().get("ColorGreen");
+								int colorBlue = (int) getConfig().get("ColorBlue");
+								Color x = Color.fromRGB(colorRed, colorGreen, colorBlue);
+								
+								int FadeColorRed = (int) getConfig().get("FadeColorRed");
+								int FadeColorGreen = (int) getConfig().get("FadeColorGreen");
+								int FadeColorBlue = (int) getConfig().get("FadeColorBlue");
+								Color x1 = Color.fromRGB(FadeColorRed, FadeColorGreen, FadeColorBlue);
+								fm.addEffect(FireworkEffect.builder()
+										.flicker(true).trail(true)
+										.with(Type.BALL_LARGE)
+										.withColor(x)
+										.withFade(x1).build());
+								fm.setPower(Integer.parseInt(getConfig().get("power").toString()));
+								f.setFireworkMeta(fm);
+							}
+						}, 20);
+			}		
+		}
+	}
+	
+	/**
+	 * ACHIEVEMENT FIREWORK
+	 */
+	
+	@EventHandler
+	public void onPlayerAchievement(final PlayerAchievementAwardedEvent e) {
+		Player player = (Player) e.getPlayer();
+		if (getConfig().getBoolean("fireworkachievement", true)) {
+			if (player.hasPermission("firework.onachievement")) {
 				Bukkit.getServer().getScheduler()
 						.scheduleSyncDelayedTask(this, new Runnable() {
 							public void run() {
@@ -484,4 +661,42 @@ public class main extends JavaPlugin implements Listener {
 		}
 	}
 	
+	/**
+	 * KICK FIREWORK
+	 */
+	
+	@EventHandler
+	public void onKick(final PlayerKickEvent e) {
+		Player player = (Player) e.getPlayer();
+		if (getConfig().getBoolean("fireworkonkick", true)) {
+			if (player.hasPermission("firework.onkick")) {
+				Bukkit.getServer().getScheduler()
+						.scheduleSyncDelayedTask(this, new Runnable() {
+							public void run() {
+								Firework f = (Firework) e
+										.getPlayer()
+										.getWorld()
+										.spawn(e.getPlayer().getLocation(),
+												Firework.class);
+								FireworkMeta fm = f.getFireworkMeta();
+								int colorRed = (int) getConfig().get("ColorRed");
+								int colorGreen = (int) getConfig().get("ColorGreen");
+								int colorBlue = (int) getConfig().get("ColorBlue");
+								Color x = Color.fromRGB(colorRed, colorGreen, colorBlue);
+								int FadeColorRed = (int) getConfig().get("FadeColorRed");
+								int FadeColorGreen = (int) getConfig().get("FadeColorGreen");
+								int FadeColorBlue = (int) getConfig().get("FadeColorBlue");
+								Color x1 = Color.fromRGB(FadeColorRed, FadeColorGreen, FadeColorBlue);
+								fm.addEffect(FireworkEffect.builder()
+										.flicker(true).trail(true)
+										.with(Type.BALL_LARGE)
+										.withColor(x)
+										.withFade(x1).build());
+								fm.setPower(Integer.parseInt(getConfig().get("power").toString()));
+								f.setFireworkMeta(fm);
+							}
+						}, 20);
+			}		
+		}
+	}	
 }
